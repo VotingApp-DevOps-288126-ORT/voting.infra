@@ -5,6 +5,14 @@ on:
     secrets:
       ECR_REPOSITORY:
         required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_SESSION_TOKEN:
+        required: false
+      AWS_REGION:
+        required: true
     inputs:
       tag:
         required: false
