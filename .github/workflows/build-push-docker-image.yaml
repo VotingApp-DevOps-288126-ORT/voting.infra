@@ -1,0 +1,49 @@
+# .github/workflows/build-push-docker-image.yaml
+name: Build & Push Docker Image to Amazon ECR
+
+on:
+  workflow_call:
+    inputs:
+      ecr_repository:
+        required: true
+        type: string
+      tag:
+        required: false
+        type: string
+        default: latest
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image_uri: ${{ steps.build-image.outputs.image_uri }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag & push image to ECR
+        id: build-image
+        run: |
+          # Variables
+          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG=${{ inputs.tag }}
+          REPO=${{ inputs.ecr_repository }}
+
+          # Build & push
+          docker build -t $ECR_REGISTRY/$REPO:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$REPO:$IMAGE_TAG
+
+          # Export output
+          echo "image_uri=$ECR_REGISTRY/$REPO:$IMAGE_TAG" >> $GITHUB_OUTPUT
