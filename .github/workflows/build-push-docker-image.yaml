@@ -1,12 +1,11 @@
-# .github/workflows/build-push-docker-image.yaml
 name: Build & Push Docker Image to Amazon ECR
 
 on:
   workflow_call:
-    inputs:
-      ecr_repository:
+    secrets:
+      ECR_REPOSITORY:
         required: true
-        type: string
+    inputs:
       tag:
         required: false
         type: string
@@ -39,7 +38,7 @@ jobs:
           # Variables
           ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG=${{ inputs.tag }}
-          REPO=${{ inputs.ecr_repository }}
+          REPO=${{ secrets.ECR_REPOSITORY }}
 
           # Build & push
           docker build -t $ECR_REGISTRY/$REPO:$IMAGE_TAG .
