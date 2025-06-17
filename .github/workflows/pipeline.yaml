@@ -15,23 +15,8 @@ permissions:
   contents: read
 
 jobs:
-  validate-docker-compose:
-    name: Validate Docker Compose
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
-
-      - name: Validate docker-compose.yml
-        run: docker-compose -f docker-compose.yml config
-
   terraform:
-    name: Terraform with S3 Backend
+    name: Apply + Validate Terraform IaC 
     runs-on: ubuntu-latest
     needs: validate-docker-compose
     env:
