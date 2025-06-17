@@ -49,7 +49,7 @@ module "voting_prod_network" {
 
 module "voting_test_network" {
   source               = "./modules/network"
-  vpc_cidr             = "10.0.0.0/16"
+  vpc_cidr             = "10.2.0.0/16"
   environment          = "test"
   azs                  = ["us-east-1a", "us-east-1b"]
   public_subnets       = ["10.2.1.0/24", "10.2.2.0/24"]
@@ -58,10 +58,9 @@ module "voting_test_network" {
   enable_dns_hostnames = true
 }
 
-
 module "voting_dev_network" {
   source               = "./modules/network"
-  vpc_cidr             = "10.0.0.0/16"
+  vpc_cidr             = "10.3.0.0/16"
   environment          = "dev"
   azs                  = ["us-east-1a"]
   public_subnets       = ["10.3.1.0/24"]
@@ -69,5 +68,4 @@ module "voting_dev_network" {
   enable_dns_support   = true
   enable_dns_hostnames = true
 }
-
 
