@@ -16,13 +16,9 @@ permissions:
 
 jobs:
   terraform:
-    name: Apply + Validate Terraform IaC 
+    name: Apply + Validate Terraform IaC
     runs-on: ubuntu-latest
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,6 +27,14 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region:            ${{ secrets.AWS_REGION }}
 
       - name: Terraform Init
         run: terraform init
@@ -45,11 +49,45 @@ jobs:
         working-directory: ./terraform
 
       - name: Terraform Plan
-        run: terraform plan 
+        run: terraform plan
         working-directory: ./terraform
 
       - name: Terraform Apply (only on push)
         if: github.event_name == 'push'
-        run: terraform apply -auto-approve 
+        run: terraform apply -auto-approve
         working-directory: ./terraform
 
+  deploy-k8s:
+    name: Deploy to EKS Clusters
+    needs: terraform
+    runs-on: ubuntu-latest
+
+    if: github.event_name == 'push'
+
+    strategy:
+      matrix:
+        cluster_name: [cluster-eks-prod]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Update kubeconfig for ${{ matrix.cluster_name }}
+        run: |
+          aws eks update-kubeconfig --region $AWS_REGION --name ${{ matrix.cluster_name }}
+
+      - name: Apply Kubernetes manifests
+        run: kubectl apply -R -f ./k8s-specifications/
