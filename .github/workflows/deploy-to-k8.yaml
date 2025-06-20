@@ -1,0 +1,66 @@
+name: Deploy to Kubernetes
+
+on:
+  workflow_call:
+    secrets:
+      ECR_REPOSITORY:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_SESSION_TOKEN:
+        required: false
+      AWS_REGION:
+        required: true
+    inputs:
+      cluster_name:
+        required: true
+        type: string
+      aws_region:
+        required: true
+        type: string
+      manifest_path:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+      commit_sha:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: Deploy manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+       with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+          
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ inputs.cluster_name }} --region ${{ inputs.aws_region }}
+
+      - name: Replace placeholders in manifest
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          IMAGE_TAG: ${{ inputs.commit_sha }}-${{ inputs.environment }}
+        run: |
+          sed -i "s|__AWS_ACCOUNT_ID__|${AWS_ACCOUNT_ID}|g" ${{ inputs.manifest_path }}
+          sed -i "s|__IMAGE_TAG__|${IMAGE_TAG}|g" ${{ inputs.manifest_path }}
+
+      - name: Apply manifest
+        run: kubectl apply -f ${{ inputs.manifest_path }}
