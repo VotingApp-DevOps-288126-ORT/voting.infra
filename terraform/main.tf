@@ -4,8 +4,11 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.0"
+    }
   }
-
   backend "s3" {
     bucket = "voting.backend"
     key    = "terraform.tfstate"
@@ -16,7 +19,6 @@ terraform {
 provider "aws" {
   region = var.region
 }
-
 
 # ECR 
 
@@ -36,6 +38,7 @@ module "voting_worker_ecr" {
 }
 
 # Networks
+
 module "voting_prod_network" {
   source               = "./modules/network"
   vpc_cidr             = "10.1.0.0/16"
@@ -69,3 +72,15 @@ module "voting_dev_network" {
   enable_dns_hostnames = true
 }
 
+# EKS
+
+module "voting_prod_cluster_eks" {
+  source             = "./modules/eks"
+  environment        = "prod"
+  public_subnet_ids  = module.voting_prod_network.public_subnet_ids
+  private_subnet_ids = module.voting_prod_network.private_subnet_ids
+  desired_size       = 2
+  max_size           = 3
+  min_size           = 1
+  instance_types     = ["t3.small"]
+}
