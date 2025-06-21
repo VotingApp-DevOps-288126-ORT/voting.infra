@@ -37,7 +37,7 @@ jobs:
     name: Deploy manifest
     runs-on: ubuntu-latest
     outputs:
-      lb_url: ${{ steps.get-lb.outputs.lb_url }} 
+      lb_url: ${{ steps.get_lb.outputs.lb_url }} 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -70,9 +70,9 @@ jobs:
         run: kubectl apply -f ${{ inputs.manifest_path }}
 
       - name: Get Load Balancer URL
-        id: get-lb
+        id: get_lb
         run: |
           LB=$(kubectl get ingress voting-ingress -n default \
               -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
           echo "Load Balancer hostname: $LB"
-          echo "lb_url=$LB" >> "$GITHUB_OUTPUT"
+          echo "lb_url=$LB" >> $GITHUB_OUTPUT
