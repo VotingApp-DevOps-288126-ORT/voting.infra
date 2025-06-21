@@ -76,3 +76,10 @@ jobs:
                -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
           echo "Load Balancer URL: http://$LB"
           echo "lb_url=http://$LB" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for Load Balancer to respond #Esto va a validar que el lb del ingress este recibiendo trafico 
+        uses: jakejarvis/wait-on-action@v1
+        with:
+          resource: http://${{ steps.get-lb.outputs.lb_url }}
+          timeout: 300
+          interval: 5
