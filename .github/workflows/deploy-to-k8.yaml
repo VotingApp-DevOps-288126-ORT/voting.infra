@@ -27,6 +27,11 @@ on:
         required: true
         type: string
 
+    outputs:                     
+      lb_url:
+        description: "Load Balancer URL"
+        value: ${{ jobs.deploy.outputs.lb_url }}
+
 jobs:
   deploy:
     name: Deploy manifest
@@ -61,3 +66,11 @@ jobs:
 
       - name: Apply manifest
         run: kubectl apply -f ${{ inputs.manifest_path }}
+
+      - name: Get Load Balancer URL
+        id: get-lb
+        run: |
+          LB=$(kubectl get ingress voting-ingress -n default \
+               -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "Load Balancer URL: https://$LB"
+          echo "lb_url=https://$LB" >> "$GITHUB_OUTPUT"
