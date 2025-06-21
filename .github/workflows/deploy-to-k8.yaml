@@ -69,10 +69,7 @@ jobs:
       - name: Apply manifest
         run: kubectl apply -f ${{ inputs.manifest_path }}
 
-      - name: Get Load Balancer URL
+      - name: Set Load Balancer Output
         id: get_lb
-        run: |
-          LB=$(kubectl get ingress voting-ingress -n default \
-              -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-          echo "Load Balancer hostname: $LB"
-          echo "lb_url=$LB" >> $GITHUB_OUTPUT
+        run: echo "lb_url=$(kubectl get ingress voting-ingress -n default -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')" >> $GITHUB_OUTPUT
+
