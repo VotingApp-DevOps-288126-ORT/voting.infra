@@ -72,5 +72,5 @@ jobs:
         run: |
           LB=$(kubectl get ingress voting-ingress -n default \
                -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-          echo "Load Balancer URL: https://$LB"
-          echo "lb_url=https://$LB" >> "$GITHUB_OUTPUT"
+          echo "Load Balancer URL: http://$LB"
+          echo "lb_url=http://$LB" >> "$GITHUB_OUTPUT"
