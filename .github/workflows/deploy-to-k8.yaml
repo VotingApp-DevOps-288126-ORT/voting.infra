@@ -36,6 +36,8 @@ jobs:
   deploy:
     name: Deploy manifest
     runs-on: ubuntu-latest
+    outputs:
+      lb_url: ${{ steps.get-lb.outputs.lb_url }} 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
