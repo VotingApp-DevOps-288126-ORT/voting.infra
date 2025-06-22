@@ -65,9 +65,9 @@ module "voting_dev_network" {
   source               = "./modules/network"
   vpc_cidr             = "10.3.0.0/16"
   environment          = "dev"
-  azs                  = ["us-east-1a"]
-  public_subnets       = ["10.3.1.0/24"]
-  private_subnets      = ["10.3.101.0/24"]
+  azs                  = ["us-east-1a", "us-east-1b"]
+  public_subnets       = ["10.3.1.0/24", "10.3.2.0/24"]
+  private_subnets      = ["10.3.101.0/24", "10.3.102.0/24"]
   enable_dns_support   = true
   enable_dns_hostnames = true
 }
@@ -84,3 +84,28 @@ module "voting_prod_cluster_eks" {
   min_size           = 1
   instance_types     = ["t3.small"]
 }
+
+module "voting_test_cluster_eks" {
+  source             = "./modules/eks"
+  environment        = "test"
+  public_subnet_ids  = module.voting_test_network.public_subnet_ids
+  private_subnet_ids = module.voting_test_network.private_subnet_ids
+  desired_size       = 2
+  max_size           = 3
+  min_size           = 1
+  instance_types     = ["t3.small"]
+}
+
+
+module "voting_dev_cluster_eks" {
+  source             = "./modules/eks"
+  environment        = "dev"
+  public_subnet_ids  = module.voting_dev_network.public_subnet_ids
+  private_subnet_ids = module.voting_dev_network.private_subnet_ids
+  desired_size       = 1
+  max_size           = 1
+  min_size           = 1
+  instance_types     = ["t3.micro"]
+}
+
+
