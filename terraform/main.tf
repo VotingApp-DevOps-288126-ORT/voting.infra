@@ -102,8 +102,8 @@ module "voting_dev_cluster_eks" {
   environment        = "dev"
   public_subnet_ids  = module.voting_dev_network.public_subnet_ids
   private_subnet_ids = module.voting_dev_network.private_subnet_ids
-  desired_size       = 1
-  max_size           = 1
+  desired_size       = 2
+  max_size           = 3
   min_size           = 1
   instance_types     = ["t3.micro"]
 }
