@@ -10,3 +10,7 @@ output "cluster_endpoint" {
 output "cluster_certificate" {
   value = module.eks_cluster.cluster_certificate
 }
+
+output "voting_ingress_hostname" {
+  value = data.aws_lb.voting_ingress.dns_name
+}

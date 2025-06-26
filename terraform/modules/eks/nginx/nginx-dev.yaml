@@ -1,36 +1,35 @@
 controller:
-  replicaCount: 1
+  replicaCount: 2
   minAvailable: 1
   resources:
     limits:
-      cpu: 200m
-      memory: 256Mi
+      cpu: 500m
+      memory: 512Mi
     requests:
       cpu: 100m
-      memory: 128Mi
+      memory: 256Mi
   autoscaling:
-    enabled: false
-
-  service:
-    type: LoadBalancer
-    annotations:
-      service.kubernetes.io/aws-load-balancer-type: "nlb"
-      service.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
-      service.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
-    externalTrafficPolicy: Local
-    targetPorts:
-      http: http
-      https: http
-
-  ingressClassResource:
-    name: nginx
     enabled: true
-    default: true
-
-  admissionWebhooks:
-    enabled: false  
-
+    annotations: {}
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 60
   updateStrategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
+  service:
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: 'true'
+      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+      service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
+      service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: 'ELBSecurityPolicy-TLS13-1-2-2021-06'
+      service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
+    targetPorts:
+      http: http
+      https: http

@@ -25,3 +25,8 @@ variable "desired_size" {
 variable "instance_types" {
   type = list(string)
 }
+
+
+variable "region" {
+  type = string
+}
