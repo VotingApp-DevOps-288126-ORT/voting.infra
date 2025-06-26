@@ -8,6 +8,10 @@ terraform {
       source  = "hashicorp/helm"
       version = "~> 2.0"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.0"
+    }
   }
   backend "s3" {
     bucket = "voting.backend"
@@ -77,6 +81,7 @@ module "voting_dev_network" {
 module "voting_prod_cluster_eks" {
   source             = "./modules/eks"
   environment        = "prod"
+  region             = var.region
   public_subnet_ids  = module.voting_prod_network.public_subnet_ids
   private_subnet_ids = module.voting_prod_network.private_subnet_ids
   desired_size       = 2
@@ -88,6 +93,7 @@ module "voting_prod_cluster_eks" {
 module "voting_test_cluster_eks" {
   source             = "./modules/eks"
   environment        = "test"
+  region             = var.region
   public_subnet_ids  = module.voting_test_network.public_subnet_ids
   private_subnet_ids = module.voting_test_network.private_subnet_ids
   desired_size       = 2
@@ -100,6 +106,7 @@ module "voting_test_cluster_eks" {
 module "voting_dev_cluster_eks" {
   source             = "./modules/eks"
   environment        = "dev"
+  region             = var.region
   public_subnet_ids  = module.voting_dev_network.public_subnet_ids
   private_subnet_ids = module.voting_dev_network.private_subnet_ids
   desired_size       = 2
@@ -109,3 +116,21 @@ module "voting_dev_cluster_eks" {
 }
 
 
+# Api Gateway
+
+module "voting_api_gateway" {
+  source = "./modules/api_gateway/"
+  name   = "voting-api"
+
+  dev_subnet_ids  = module.voting_dev_network.private_subnet_ids
+  test_subnet_ids = module.voting_test_network.private_subnet_ids
+  prod_subnet_ids = module.voting_prod_network.private_subnet_ids
+
+  dev_security_group_ids  = [module.voting_dev_network.sg_id]
+  test_security_group_ids = [module.voting_test_network.sg_id]
+  prod_security_group_ids = [module.voting_prod_network.sg_id]
+
+  dev_ingress_dns  = module.voting_dev_cluster_eks.voting_ingress_hostname
+  test_ingress_dns = module.voting_test_cluster_eks.voting_ingress_hostname
+  prod_ingress_dns = module.voting_prod_cluster_eks.voting_ingress_hostname
+}

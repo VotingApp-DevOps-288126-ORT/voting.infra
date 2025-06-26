@@ -30,8 +30,6 @@ module "node_group" {
   depends_on     = [module.eks_cluster]
 }
 
-
-# Refactor to module TODO
 resource "helm_release" "nginx_ingress" {
   name             = "nginx-ingress"
   repository       = "https://kubernetes.github.io/ingress-nginx"
@@ -40,7 +38,8 @@ resource "helm_release" "nginx_ingress" {
   create_namespace = true
   version          = "4.12.1"
   values           = [file("${path.module}/nginx/nginx-${var.environment}.yaml")]
-
+  wait             = true # <- Espera al LB
+  timeout          = 1800 # <- hasta 30 minutos
   set {
     name  = "controller.service.internal.enabled"
     value = "true"
@@ -52,6 +51,7 @@ resource "helm_release" "nginx_ingress" {
   ]
 }
 
+
 data "aws_eks_cluster_auth" "prod" {
   name = module.eks_cluster.name
 }
@@ -62,6 +62,27 @@ provider "helm" {
     cluster_ca_certificate = base64decode(module.eks_cluster.cluster_certificate)
     token                  = data.aws_eks_cluster_auth.prod.token
   }
+}
+
+provider "kubernetes" {
+  host                   = module.eks_cluster.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks_cluster.cluster_certificate)
+  token                  = data.aws_eks_cluster_auth.prod.token
+}
+
+
+data "aws_lb" "voting_ingress" {
+  # Los tags EXACTOS que viste en la consola:
+  tags = {
+    "kubernetes.io/cluster/cluster-eks-${var.environment}" = "owned"
+    "kubernetes.io/service-name"                           = "ingress-nginx/nginx-ingress-ingress-nginx-controller"
+  }
+
+  depends_on = [
+    module.eks_cluster,
+    module.node_group,
+    helm_release.nginx_ingress
+  ]
 }
 
 
