@@ -5,12 +5,12 @@ resource "aws_apigatewayv2_api" "voting_api" {
 
 # Integration
 
-resource "aws_apigatewayv2_integration" "dev" {
+resource "aws_apigatewayv2_integration" "vote" {
   api_id                 = aws_apigatewayv2_api.voting_api.id
   integration_type       = "HTTP_PROXY"
   connection_type        = "INTERNET"
   integration_method     = "ANY"
-  integration_uri        = "http://${var.dev_ingress_dns}"
+  integration_uri        = "http://${var.ingress_dns_vote}"
   payload_format_version = "1.0"
 
   request_parameters = {
@@ -18,25 +18,12 @@ resource "aws_apigatewayv2_integration" "dev" {
   }
 }
 
-resource "aws_apigatewayv2_integration" "test" {
+resource "aws_apigatewayv2_integration" "result" {
   api_id                 = aws_apigatewayv2_api.voting_api.id
   integration_type       = "HTTP_PROXY"
   connection_type        = "INTERNET"
   integration_method     = "ANY"
-  integration_uri        = "http://${var.test_ingress_dns}"
-  payload_format_version = "1.0"
-
-  request_parameters = {
-    "overwrite:path" = "/$request.path.proxy"
-  }
-}
-
-resource "aws_apigatewayv2_integration" "prod" {
-  api_id                 = aws_apigatewayv2_api.voting_api.id
-  integration_type       = "HTTP_PROXY"
-  connection_type        = "INTERNET"
-  integration_method     = "ANY"
-  integration_uri        = "http://${var.prod_ingress_dns}"
+  integration_uri        = "http://${var.ingress_dns_result}"
   payload_format_version = "1.0"
 
   request_parameters = {
@@ -48,20 +35,14 @@ resource "aws_apigatewayv2_integration" "prod" {
 
 resource "aws_apigatewayv2_route" "dev" {
   api_id    = aws_apigatewayv2_api.voting_api.id
-  route_key = "ANY /dev/{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.dev.id}"
+  route_key = "ANY /vote/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.vote.id}"
 }
 
 resource "aws_apigatewayv2_route" "test" {
   api_id    = aws_apigatewayv2_api.voting_api.id
-  route_key = "ANY /test/{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.test.id}"
-}
-
-resource "aws_apigatewayv2_route" "prod" {
-  api_id    = aws_apigatewayv2_api.voting_api.id
-  route_key = "ANY /prod/{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.prod.id}"
+  route_key = "ANY /result/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.result.id}"
 }
 
 resource "aws_apigatewayv2_stage" "default" {

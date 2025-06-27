@@ -4,14 +4,6 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 2.0"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.0"
-    }
   }
   backend "s3" {
     bucket = "voting.backend"
@@ -116,21 +108,11 @@ module "voting_dev_cluster_eks" {
 }
 
 
-# Api Gateway
+//Lambda Prod
 
-module "voting_api_gateway" {
-  source = "./modules/api_gateway/"
-  name   = "voting-api"
-
-  dev_subnet_ids  = module.voting_dev_network.private_subnet_ids
-  test_subnet_ids = module.voting_test_network.private_subnet_ids
-  prod_subnet_ids = module.voting_prod_network.private_subnet_ids
-
-  dev_security_group_ids  = [module.voting_dev_network.sg_id]
-  test_security_group_ids = [module.voting_test_network.sg_id]
-  prod_security_group_ids = [module.voting_prod_network.sg_id]
-
-  dev_ingress_dns  = module.voting_dev_cluster_eks.voting_ingress_hostname
-  test_ingress_dns = module.voting_test_cluster_eks.voting_ingress_hostname
-  prod_ingress_dns = module.voting_prod_cluster_eks.voting_ingress_hostname
+module "lambda" {
+  source           = "./modules/lambda"
+  cluster_endpoint = module.voting_prod_cluster_eks.cluster_endpoint
+  cluster_token    = module.voting_prod_cluster_eks.cluster_auth
+  cluster_ca       = module.voting_prod_cluster_eks.cluster_certificate
 }
