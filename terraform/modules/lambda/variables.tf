@@ -1,14 +1,19 @@
 
 
-variable "cluster_endpoint" {
+variable "ecr_worker" {
   type = string
 }
 
 
-variable "cluster_ca" {
+variable "ecr_result" {
   type = string
 }
 
-variable "cluster_token" {
+variable "ecr_vote" {
+  type = string
+}
+
+
+variable "region" {
   type = string
 }

@@ -1,3 +1,4 @@
+
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_dir  = path.module
@@ -9,7 +10,7 @@ data "aws_iam_role" "lab_role" {
 }
 
 resource "aws_lambda_function" "eks_backup_lambda" {
-  function_name    = "eks-backup-lambda"
+  function_name    = "counter-ecr-images-by-apps"
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = filebase64sha256(data.archive_file.lambda_zip.output_path)
   role             = data.aws_iam_role.lab_role.arn
@@ -19,13 +20,10 @@ resource "aws_lambda_function" "eks_backup_lambda" {
 
   environment {
     variables = {
-      REGION           = "us-east-1"
-      CLUSTER_NAME     = "cluster-eks-prod"
-      BUCKET_NAME      = "voting.backend"
-      ENV              = "prod"
-      CLUSTER_ENDPOINT = var.cluster_endpoint
-      CLUSTER_CA       = var.cluster_ca
-      EKS_TOKEN        = var.cluster_token
+      REGION      = var.region
+      REPO_VOTE   = var.ecr_vote
+      REPO_RESULT = var.ecr_result
+      REPO_WORKER = var.ecr_worker
     }
   }
 }
