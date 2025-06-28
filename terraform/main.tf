@@ -111,8 +111,9 @@ module "voting_dev_cluster_eks" {
 //Lambda Prod
 
 module "lambda" {
-  source           = "./modules/lambda"
-  cluster_endpoint = module.voting_prod_cluster_eks.cluster_endpoint
-  cluster_token    = module.voting_prod_cluster_eks.cluster_auth
-  cluster_ca       = module.voting_prod_cluster_eks.cluster_certificate
+  source     = "./modules/lambda"
+  region     = var.region
+  ecr_worker = module.voting_worker_ecr.repository_name
+  ecr_vote   = module.voting_vote_ecr.repository_name
+  ecr_result = module.voting_result_ecr.repository_name
 }

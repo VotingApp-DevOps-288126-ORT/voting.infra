@@ -91,3 +91,74 @@ jobs:
 
       - name: Apply Kubernetes manifests
         run: kubectl apply -R -f ./k8s-specifications/
+
+  notify:
+    name: Send deployment notification via Gmail
+    needs: deploy-k8s
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    steps:
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region:            ${{ env.AWS_REGION }}
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
+
+      - name: Invoke ECR-checker Lambda
+        id: ecr_check
+        run: |
+          aws lambda invoke \
+            --function-name counter-ecr-images-by-apps \
+            --region $AWS_REGION \
+            --payload '{}' \
+            ecr.json
+          cat ecr.json
+
+      - name: Extract image counts
+        id: extract_counts
+        run: |
+          vote=$(jq -r '.body.vote'    ecr.json)
+          result=$(jq -r '.body.result' ecr.json)
+          worker=$(jq -r '.body.worker' ecr.json)
+          echo "vote=$vote"    >> $GITHUB_OUTPUT
+          echo "result=$result">> $GITHUB_OUTPUT
+          echo "worker=$worker">> $GITHUB_OUTPUT
+
+      - name: Build email body
+        id: build_email
+        run: |
+          v=${{ steps.extract_counts.outputs.vote }}
+          r=${{ steps.extract_counts.outputs.result }}
+          w=${{ steps.extract_counts.outputs.worker }}
+
+          {
+            echo "✅ *Infra Deploy exitoso*"
+            echo
+            echo "📦 *Imágenes en ECR*"
+            echo "- voting_vote:   $v"
+            echo "- voting_result: $r"
+            echo "- voting_worker: $w"
+            echo
+            echo "Saludos,"
+            echo "Equipo de Infra"
+          } > email_body.txt
+
+          # Exponer el cuerpo como output
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          cat email_body.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Send email via Gmail SMTP
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER_ADDRESS }}
+          server_port:    ${{ secrets.SMTP_SERVER_PORT }}
+          username:        ${{ secrets.GMAIL_USERNAME }}
+          password:        ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject:         "✅ Infra Deploy Exitoso"
+          to:              ${{ secrets.GMAIL_USERNAME }}
+          from:            ${{ secrets.GMAIL_USERNAME }}
+          body:            ${{ steps.build_email.outputs.body }}
