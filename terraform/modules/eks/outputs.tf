@@ -16,6 +16,13 @@ output "cluster_auth" {
 }
 
 
+output "ng_name" {
+  value = module.node_group.ng_name
+}
+
+
+
+
 
 
 
