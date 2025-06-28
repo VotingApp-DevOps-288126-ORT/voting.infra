@@ -124,4 +124,5 @@ module "cloudwatch" {
   source       = "./modules/cloudwatch"
   region       = var.region
   cluster_name = module.voting_prod_cluster_eks.cluster_name
+  depends_on   = [module.voting_prod_cluster_eks]
 }
