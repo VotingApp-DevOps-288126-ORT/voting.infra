@@ -117,3 +117,13 @@ module "lambda" {
   ecr_vote   = module.voting_vote_ecr.repository_name
   ecr_result = module.voting_result_ecr.repository_name
 }
+
+# Cloudwatch
+
+module "cloudwatch" {
+  source          = "./modules/cloudwatch"
+  region          = var.region
+  cluster_name    = module.voting_prod_cluster_eks.cluster_name
+  node_group_name = module.voting_prod_cluster_eks.ng_name
+  depends_on      = [module.voting_prod_cluster_eks]
+}
