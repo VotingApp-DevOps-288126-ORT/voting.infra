@@ -139,6 +139,80 @@ Esto construirá toda la infraestructura necesaria para levantar la aplicacion e
 
 ---
 
+**Deploy Cloud Manual:**
+
+A continuación se describen los pasos para reproducir manualmente lo que hace el pipeline de GitHub Actions en las fases de Terraform y Kubernetes. Usamos un nombre de cluster genérico `cluster-eks-{environment}` donde `{environment}` es `dev`, `test` o `prod`.
+
+Crear un bucket S3 llamado ‘voting.backend’ para guardar el estado de la infraestructura que deployaremos con terraform aplicando IaC.
+
+---
+
+1. **Moverse al directorio de IaC**
+
+   ```bash
+   cd infra/terraform
+   ```
+
+2. **Inicializar Terraform**
+
+   ```bash
+   terraform init
+   ```
+
+3. **Comprobar formato**
+
+   ```bash
+   terraform fmt -check
+   ```
+
+4. **Validar la configuración**
+
+   ```bash
+   terraform validate
+   ```
+
+5. **Generar el plan de cambios**
+
+   ```bash
+   terraform plan -out plan.tfplan
+   ```
+
+6. **Aplicar los cambios**
+
+   ```bash
+   terraform apply
+   ```
+
+### 2. Desplegar Manifiestos en Kubernetes
+
+1. **Actualizar kubeconfig**
+
+   ```bash
+   aws eks update-kubeconfig \
+     --region $AWS_REGION \
+     --name cluster-eks-${ENVIRONMENT}
+   ```
+
+2. **Aplicar manifiestos genéricos**
+
+   ```bash
+   kubectl apply -R -f ./k8s-specifications/
+   ```
+
+3. **Desplegar los Deployment específicos de cada aplicación**
+
+   Cada repositorio de aplicación incluye su propio manifiesto de deployment. Por ejemplo, para `voting.vote`:
+
+   ```bash
+   git clone git@github.com:<org>/voting.vote.git
+   cd voting.vote/k8s-specifications
+   kubectl apply -f deployment.yaml
+   ```
+
+   Repite el proceso en `voting.result` y `voting.worker`, ajustando la ruta y el nombre del manifiesto según corresponda.
+
+Con estos pasos habrás reproducido manualmente el aprovisionamiento de infraestructura y el despliegue en Kubernetes tal como lo hace el pipeline automatizado.
+
 ## 4. Estrategia de ramificacion para codigo de Aplicacion
 
 A continuación se detalla paso a paso el flujo de trabajo basado en Git Flow, adaptado a nuestros tres entornos (Dev, Test y Prod) para los repositorios `voting.result`, `voting.vote` y `voting.worker`. Sigue cuidadosamente cada paso para mantener la coherencia y la calidad en todo el ciclo de vida del código.
