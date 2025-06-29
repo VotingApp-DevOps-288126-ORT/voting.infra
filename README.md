@@ -214,15 +214,15 @@ El flujo de trabajo se estructuró con los siguientes estados:
 
 Inicio del proyecto:
 
-![trello 1.png](/imgs/trello_1.png)
+![trello 1.png](/imgs/trello-1.png)
 
 Mitad del proyecto:
 
-![trello 2.png](/imgs/trello_2.png)
+![trello 2.png](/imgs/trello-2.png)
 
 Final del proyecto:
 
-![trello 3.png](/imgs/trello_3.png)
+![trello 3.png](/imgs/trello-3.png)
 
 ---
 
